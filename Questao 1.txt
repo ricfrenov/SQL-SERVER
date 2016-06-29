@@ -1,0 +1,25 @@
+/* Acrescente o campo Comissão na tabela Funcionário. Toda vez que o funcionário fizer uma venda, ele deve receber 5% de comissão. As comissões devem ser acumuladas durante o mês para ser pago pelo empregador. 
+*/
+
+ALTER TABLE FUNCIONARIO
+ADD COMISSAO DECIMAL (10,2) DEFAULT 0;
+
+
+CREATE TRIGGER TR_COMISSAO ON VENDA AFTER INSERT
+
+AS 
+
+BEGIN
+	DECLARE @MATRICULA INT, 
+			@TOTAL INT,
+			@CODIGO_VENDA INT;
+
+	SELECT @MATRICULA = MATRICULA, @TOTAL = TOTAL 
+	FROM INSERTED;
+
+	
+	UPDATE FUNCIONARIO SET
+	COMISSAO = COMISSAO + (@TOTAL * 0.05)
+	WHERE MATRICULA = @MATRICULA;
+
+END;

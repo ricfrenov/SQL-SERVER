@@ -1,0 +1,17 @@
+/* Altere a tabela Funcionário criando o campo Ativo que vai aceitar os valores S ou N com valor S como default. Crie o usuário rh com direito de select, insert e update nesta tabela e na tabela cargo.
+*/
+
+ALTER TABLE FUNCIONARIO
+ADD ATIVO CHAR(1) DEFAULT 'S';
+
+-- Criação do Usuário RH com o Password '123456'.
+CREATE LOGIN RH 
+    WITH PASSWORD = '123456';
+GO
+
+-- Cria um usuário de banco de dados para o login criado acima.
+CREATE USER RH FOR LOGIN RH;
+GO
+
+--Atribuir permissões ao usuário RH na tabela Funcionario
+GRANT SELECT,INSERT,UPDATE ON FUNCIONARIO TO RH;

@@ -1,0 +1,142 @@
+/* Fazer uma stored procedure que mostre um relatório anual das vendas dos funcionários. O ano deve ser informado. O relatório deve ter quebra por mês. Ordene os funcionários pelo valor vendido por mês em ordem decrescente.
+O relatório deve ter o seguinte layout:
+Data: XX/XX/XXXX
+Ano: XXXX
+                                	RELATÓRIO DE VENDAS
+Mês:
+ Funcionário  		Valor
+-------------------------------------------------------------------------
+XXXXXXXXXX                	 123,45
+XXXXXXXXXX                 	123,45
+XXXXXXXXXX                 	123,45
+XXXXXXXXXX         	123,45  
+Subtotal do Mês: 12345,67
+Funcionário  		Valor
+-------------------------------------------------------------------------
+XXXXXXXXXX             	 123,45
+XXXXXXXXXX                 	123,45
+XXXXXXXXXX                 	123,45
+XXXXXXXXXX                	123,45  
+Subtotal do Mês: 12345,67
+================================================
+Total Ano: 1234567,89
+
+Mostrar o subtotal que representa o total das vendas do mês. Mostrar o total que representa o total de todas as vendas no ano.
+*/
+
+
+CREATE PROCEDURE USP_VENDA_FUNCIONARIO
+@ANO_INFORMADO INT = NULL
+AS
+BEGIN
+-- VARIAVEIS PARA RECUPERAR DADOS DO CURSOR
+		DECLARE @MES VARCHAR(30);
+		DECLARE @FUNCIONARIO  CHAR(30);
+		DECLARE @TOTAL DECIMAL(8,2);
+				
+-- VARIAVEIS AUXILIARES
+		DECLARE @NOVO_MES VARCHAR(30);
+
+-- VARIAVEIS ACUMULADORAS
+		DECLARE @TOT_MES_SALARIO DECIMAL(8,2); -- TOTAL DO SALARIO POR MES
+		DECLARE @TOT_ANO_SALARIO DECIMAL (10,2); -- TOTAL DO SALARIO DO ANO
+		DECLARE CR_FUNCIONARIO_VENDA CURSOR FOR
+SELECT   
+		
+		SUM( VENDA.TOTAL),
+		FUNCIONARIO.NOME,
+		DATENAME(MONTH,VENDA.DATA) AS MES
+FROM FUNCIONARIO
+		INNER JOIN VENDA 
+		ON VENDA.MATRICULA = FUNCIONARIO.MATRICULA
+		WHERE YEAR(VENDA.DATA) = @ANO_INFORMADO
+GROUP BY 
+		VENDA.TOTAL,
+		FUNCIONARIO.NOME,
+		DATENAME(MONTH,VENDA.DATA),
+		MONTH(VENDA.DATA)
+		
+ORDER BY MONTH (VENDA.DATA), SUM(VENDA.TOTAL) DESC ;
+
+-- ABRIR CURSOR
+OPEN CR_FUNCIONARIO_VENDA;
+
+--RECUPERAR A 1A LINHA
+FETCH NEXT FROM CR_FUNCIONARIO_VENDA 
+INTO
+		@TOTAL,  
+		@FUNCIONARIO,
+		@MES;
+
+--GUARDAR O 1o MES
+		SET @NOVO_MES = @MES;
+
+--INICIALIZAR AS VARIAVEIS
+		SET @TOT_MES_SALARIO = 0;
+		SET @TOT_ANO_SALARIO = 0;
+		PRINT '';
+		PRINT 'DATA: ' + CONVERT(VARCHAR,GETDATE());
+		PRINT '';
+		PRINT 'ANO: ' + CONVERT (VARCHAR,@ANO_INFORMADO);
+		PRINT '';
+		PRINT '               RELATÓRIO DE VENDAS               ';
+		PRINT '';
+		PRINT 'MÊS: ' + @MES; 
+		PRINT '';
+		PRINT 'FUNCIONARIO                                 VALOR';
+		PRINT '-------------------------------------------------';
+		
+WHILE @@FETCH_STATUS = 0
+BEGIN
+
+--QUEBRAR POR MES
+		IF @NOVO_MES <> @MES
+		BEGIN
+				
+--IMPRIMIR OS TOTAIS POR MÊS
+		PRINT ''
+		PRINT 'SUBTOTAL DO MÊS: ' + CONVERT(VARCHAR, @TOT_MES_SALARIO);
+		PRINT'';				
+
+--ZERAR A VARIAVEIS ACUMULADORA E CONTADORA
+		SET @TOT_MES_SALARIO = 0;
+		
+--GUARDAR O NOVO MES
+		SET @NOVO_MES = @MES
+		PRINT '';
+		PRINT 'MES: ' + @MES;
+		PRINT '';
+		PRINT 'FUNCIONARIO                                 VALOR';
+		PRINT '-------------------------------------------------';
+		PRINT '';
+		END;
+
+--IMPRIMIR O NOME DO FUNCIONARIO E O SEU SALARIO
+		PRINT @FUNCIONARIO + ' VALOR R$: ' + CONVERT(VARCHAR, @TOTAL);
+		
+--ACUMULAR O SALARIO
+		SET @TOT_MES_SALARIO = @TOT_MES_SALARIO + @TOTAL;
+		SET @TOT_ANO_SALARIO = @TOT_ANO_SALARIO + @TOTAL;
+	
+--RECUPERAR A PROXIMA LINHA
+		FETCH NEXT FROM CR_FUNCIONARIO_VENDA 
+   INTO 
+		@TOTAL,
+        @FUNCIONARIO,    
+		@MES;
+
+		END;
+
+		CLOSE CR_FUNCIONARIO_VENDA;
+		DEALLOCATE CR_FUNCIONARIO_VENDA;
+		
+		PRINT '';
+		PRINT 'SUBTOTAL DO MÊS R$: ' + CONVERT(VARCHAR, @TOT_MES_SALARIO);
+		PRINT '';
+		PRINT '=================================================';
+		PRINT '';
+		PRINT 'TOTAL DO ANO R$: ' + CONVERT(VARCHAR, @TOT_ANO_SALARIO);
+		
+
+END;
+

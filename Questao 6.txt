@@ -1,0 +1,29 @@
+/* Altere o Salário para que ele receba o valor Zero como padrão (default). Crie o usuário estagiario e permita que ele faça insert, update e select na tabela funcionário. Crie uma view de funcionário mostrando todos os campos da tabela exceto o salário e dê permissão de select para o estagiário. */
+
+ALTER TABLE FUNCIONARIO 
+ADD DEFAULT 0 FOR SALARIO;
+
+-- Criação do Usuário Estagiario com o Password '123456'.
+CREATE LOGIN Estagiario 
+WITH PASSWORD = '123456';
+
+-- Cria um usuário de banco de dados para o login Estagiario.
+CREATE USER Estagiario FOR LOGIN Estagiario;
+
+--Atribuindo Permissões a Estagiario
+GRANT INSERT,UPDATE,SELECT ON FUNCIONARIO TO Estagiario;
+
+--CRIAÇÃO DA VIEW DA TABELA FUNCIONARIO
+
+CREATE VIEW VWFUNCIONARIO 
+AS 
+SELECT 
+	MATRICULA AS CÓDIGO_DO_FUNCIONÁRIO ,
+	NOME AS NOME_FUNCIONARIO, 
+	GENERO  AS GENERO_FUNCIONARIO, 
+	ATIVO AS ESTADO_ATIVO , 
+	COMISSAO AS COMISSÃO
+FROM FUNCIONARIO
+
+--DANDO PERMISSÕES AO ESTAGIÁRIO PARA USAR O COMANDO SELECT NA VIEW
+GRANT SELECT ON VWFUNCIONARIO TO Estagiario;
